@@ -5,6 +5,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from spotify_api import get_auth_url, get_token_info, refresh_token
 import json
 from DB.models import SPOTIFY
+from CRUD.spotify import *
 
 def login(request: Request) -> RedirectResponse:
     #session = request.session
@@ -22,10 +23,13 @@ def handle_callback(request: Request) -> RedirectResponse:
         return JSONResponse({"error": request.query_params['error']})
     if 'code' in request.query_params:
         token_info = get_token_info(request.query_params['code'])
-        session['access_token'] = token_info['access_token']
-        session['refresh_token'] = token_info['refresh_token']
-        session['expires_at'] = datetime.now().timestamp() + token_info['expires_in']
-        session['emotion'] = ''
+
+        #session['access_token'] = token_info['access_token']
+        #session['refresh_token'] = token_info['refresh_token']
+        #session['expires_at'] = datetime.now().timestamp() + token_info['expires_in']
+        expires_at = datetime.now().timestamp() + token_info['expires_in']
+        #session['emotion'] = ''
+        insert_SpotifyInfo(session['user_id'], token_info['access_token'], token_info['refresh_token'], expires_at)
         return RedirectResponse('/me')
 
 def refresh_access_token(request: Request) -> RedirectResponse:

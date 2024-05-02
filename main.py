@@ -8,6 +8,13 @@ from spotify_api import get_playlist
 from predict_emotion import predict_emotion
 from fastapi.middleware.cors import CORSMiddleware
 import requests
+from DB.database import engineconn
+from CRUD.spotify import *
+from routers.login import router as login_router
+import uvicorn
+engine = engineconn()
+session_maker = engine.sessionmaker()
+
 
 dic = {'1':''}
 app = FastAPI()
@@ -19,20 +26,22 @@ app.add_middleware(
     allow_methods=["GET", "POST"],
     allow_headers=["*"],
 )
+
+app.include_router(login_router)
 emotion_test = ''
 @app.get('/')
 async def index():
     return {"message": "Hello World"}
 
-@app.get('/login')
-async def login_route(request: Request):
+@app.get('/{user_id}/login')
+async def login_route(request: Request, user_id: str):
     return login(request)
 
 @app.get('/callback')
 async def callback(request: Request):
     return handle_callback(request)
 
-@app.get('/me')
+@app.get('/{user_id}/me')
 async def get_emotion(request: Request):
     try:
         session = request.session
@@ -48,11 +57,6 @@ async def get_emotion(request: Request):
         dic['1'] = emotion
         print(dic['1'])
         session['emotion'] = emotion
-        #emotion = '기쁨, 설렘'
-        #return RedirectResponse(url = 'http://localhost:3000')
-        #return JSONResponse(session['emotion'])
-        
-        #return RedirectResponse('/emotion')
         print(session)
         return JSONResponse(session['emotion'])
     except Exception:
@@ -67,3 +71,6 @@ async def send_emotion():
 @app.get('/refresh-token')
 def refresh_token(request: Request):
     return refresh_access_token(request)
+
+if __name__ == "__main__":
+    uvicorn.run("main:app", host='127.0.0.1', port=8000, reload=True)

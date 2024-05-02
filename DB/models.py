@@ -41,6 +41,7 @@ class SPOTIFY(Base):
     ACCESS_TOKEN = Column(VARCHAR(255), nullable = False)
     REFRESH_TOKEN = Column(VARCHAR(255), nullable = False)
     EXPIRE_DATE = Column(FLOAT, nullable = True)
+    EMOTION = Column(VARCHAR, nullable = True)
 
 class VOD(Base):
     __tablename__ = "VOD"
