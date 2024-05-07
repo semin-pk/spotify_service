@@ -11,6 +11,8 @@ import requests
 from DB.database import engineconn
 from CRUD.spotify import *
 from routers.login import router as login_router
+from routers.signup import router as signup_router
+from routers.mainpage import router as mainpage_router
 import uvicorn
 engine = engineconn()
 session_maker = engine.sessionmaker()
@@ -28,45 +30,18 @@ app.add_middleware(
 )
 
 app.include_router(login_router)
+app.include_router(signup_router)
+app.include_router(mainpage_router)
 emotion_test = ''
 @app.get('/')
 async def index():
     return {"message": "Hello World"}
 
-@app.get('/{user_id}/login')
-async def login_route(request: Request, user_id: str):
-    return login(request)
-
 @app.get('/callback')
 async def callback(request: Request):
     return handle_callback(request)
 
-@app.get('/{user_id}/me')
-async def get_emotion(request: Request):
-    try:
-        session = request.session
-        print(session)
-        if 'access_token' not in session:
-            return refresh_access_token(request)
-        if datetime.now().timestamp() > session['expires_at']:
-            return refresh_access_token(request)
-        
-        audio_names = get_playlist(session['access_token'])
-        lyrics_list = crawling_lyrics(audio_names)
-        emotion=predict_emotion(lyrics_list)
-        dic['1'] = emotion
-        print(dic['1'])
-        session['emotion'] = emotion
-        print(session)
-        return JSONResponse(session['emotion'])
-    except Exception:
-        error = '연동실패!'
-        return JSONResponse(error)
-@app.get('/emotion')
-async def send_emotion():
-    print(dic['1'])
-    
-    return JSONResponse(dic['1'])
+
 
 @app.get('/refresh-token')
 def refresh_token(request: Request):

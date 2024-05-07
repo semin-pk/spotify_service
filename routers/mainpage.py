@@ -6,15 +6,23 @@ from DB.database import engineconn
 from sqlalchemy import *
 from fastapi.responses import JSONResponse
 from CRUD.spotify import *
-from spotify_user import login, handle_callback, refresh_access_token
 from lyrics_crawler import crawling_lyrics
 from datetime import datetime
 from spotify_api import get_playlist
 from predict_emotion import predict_emotion
-engine = engineconn()
-session_maker = engine.sessionmaker()
+from collections import deque
+
+d = deque()
 router = APIRouter(prefix='/mainpage')
 dic = {}
+
+def get_deque():
+    return d
+
+@router.get('/')
+async def example():
+    return {'message':'hello'}
+
 @router.post('/spotify/{user_id}')
 async def spotify_list(user_id):
     vod_list = vodlist_match_useremotion(user_id)
@@ -28,47 +36,31 @@ async def spotify_status(user_id):
 
 @router.post('/spotify/{user_id}/connect_url')
 async def login_route(request: Request, user_id):
-    session = request.session
-    session['user_id'] = user_id
+    d.append(int(user_id))
+    print(d)
+    from spotify_user import login
     return login(request)
 
-@router.get('/callback')
-async def callback(request: Request):
-    return handle_callback(request)
-
-@router.post('/spotify/{user_id}')
+@router.post('/spotify/{user_id}/userinfo')
 async def get_emotion(request: Request, user_id):
+
     try:
         user_info = select_SpotifyInfo(user_id)
         print(user_info)
-        if 'access_token' not in user_info:
+        user_info = user_info[0]
+        print(len(user_info))
+        if len(user_info) == 0:
+            from spotify_user import refresh_access_token
             return refresh_access_token(user_info)
-        if datetime.now().timestamp() > session['expires_at']:
-            return refresh_access_token(request)
-        audio_names = get_playlist(session['access_token'])
+        if datetime.now().timestamp() > user_info['EXPIRE_DATE']:
+            from spotify_user import refresh_access_token
+            return refresh_access_token(user_info)
+        audio_names = get_playlist(user_info['ACCESS_TOKEN'])
         lyrics_list = crawling_lyrics(audio_names)
         emotion=predict_emotion(lyrics_list)
-        dic[user_id] = emotion
-        print(dic['1'])
-        session['emotion'] = emotion
-        print(session)
-        return JSONResponse(session['emotion'])
+        print(type(emotion))
+        update_emotion(user_id,emotion)
+        return JSONResponse(emotion)
     except Exception:
         error = '연동실패!'
         return JSONResponse(error)
-@app.get('/emotion')
-async def send_emotion():
-    print(dic['1'])
-    
-    return JSONResponse(dic['1'])
-
-@app.get('/refresh-token')
-def refresh_token(request: Request):
-    return refresh_access_token(request)
-
-
-
-
-    
-
-

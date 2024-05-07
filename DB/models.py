@@ -42,6 +42,15 @@ class SPOTIFY(Base):
     REFRESH_TOKEN = Column(VARCHAR(255), nullable = False)
     EXPIRE_DATE = Column(FLOAT, nullable = True)
     EMOTION = Column(VARCHAR, nullable = True)
+    def to_dict(self):
+        return {
+            "SPOTIFY_ID": self.SPOTIFY_ID,
+            "USER_ID": self.USER_ID,
+            "ACCESS_TOKEN": self.ACCESS_TOKEN,
+            "REFRESH_TOKEN": self.REFRESH_TOKEN,
+            "EXPIRE_DATE": self.EXPIRE_DATE,
+            "EMOTION": self.EMOTION
+        }
 
 class VOD(Base):
     __tablename__ = "VOD"
@@ -57,3 +66,9 @@ class VOD(Base):
     POSTER_URL = Column(VARCHAR(255), nullable = True)
     TRAILER_URL = Column(VARCHAR(255), nullable = True)
     RTM = Column(INT, nullable = True)
+    def to_dict(self):
+        return {
+            "VOD_ID": self.VOD_ID,
+            "TITLE": self.TITLE,
+            "POSTER_URL": self.POSTER_URL
+        }

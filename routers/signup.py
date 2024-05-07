@@ -7,15 +7,13 @@ from sqlalchemy import *
 from fastapi.responses import JSONResponse
 engine = engineconn()
 session_maker = engine.sessionmaker()
-signup = APIRouter(prefix='/signup')
+router = APIRouter(prefix='/signup')
 class Signup(BaseModel):
-     USER_ID : int
      SETTOP_NUM : str
      USER_NAME : str
      GENDER : str
      AGE : int
-     SPOTIFY : int
-@signup.post('/signup')
+@router.post('/')
 def signup(signup: Signup):
     if signup:
         session_maker.execute(

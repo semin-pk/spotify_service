@@ -6,6 +6,9 @@ from spotify_api import get_auth_url, get_token_info, refresh_token
 import json
 from DB.models import SPOTIFY
 from CRUD.spotify import *
+from routers.mainpage import get_deque
+
+d = get_deque()
 
 def login(request: Request) -> RedirectResponse:
     #session = request.session
@@ -18,26 +21,27 @@ def login(request: Request) -> RedirectResponse:
     return JSONResponse(auth_url)
 
 def handle_callback(request: Request) -> RedirectResponse:
-    session = request.session
     if 'error' in request.query_params:
         return JSONResponse({"error": request.query_params['error']})
     if 'code' in request.query_params:
         token_info = get_token_info(request.query_params['code'])
-
-        #session['access_token'] = token_info['access_token']
-        #session['refresh_token'] = token_info['refresh_token']
-        #session['expires_at'] = datetime.now().timestamp() + token_info['expires_in']
         expires_at = datetime.now().timestamp() + token_info['expires_in']
-        #session['emotion'] = ''
-        insert_SpotifyInfo(session['user_id'], token_info['access_token'], token_info['refresh_token'], expires_at)
-        return RedirectResponse('/me')
+        print(token_info)
+        user_id = d.popleft()
+        insert_SpotifyInfo(user_id, token_info['access_token'], token_info['refresh_token'], expires_at)
+        update_spotify_status(user_id)
+        return JSONResponse(content='ok', status_code=200)
 
-def refresh_access_token(request: Request) -> RedirectResponse:
-    session = request.session
-    if 'refresh_token' not in session:
+def refresh_access_token(user_info:dict) -> RedirectResponse:
+    
+    if 'REFRESH_TOKEN' not in user_info:
         return RedirectResponse('/login')
-    if datetime.now().timestamp() > session['expires_at']:
-        new_token_info = refresh_token(session['refresh_token'])
-        session['access_token'] = new_token_info['access_token']
-        session['expires_at'] = datetime.now().timestamp() + new_token_info['expires_in']
-        return RedirectResponse('/me')
+    if datetime.now().timestamp() > user_info['EXPIRE_DATE']:
+        print(user_info['REFRESH_TOKEN'])
+        new_token_info = refresh_token(user_info['REFRESH_TOKEN'])
+        print(new_token_info)
+        access_token= new_token_info['access_token']
+        expire_date= datetime.now().timestamp() + new_token_info['expires_in']
+        user_id = user_info['USER_ID']
+        update_refreshtoken(user_id, access_token, expire_date)
+        return RedirectResponse(f'/spotify/{user_id}/userinfo')
