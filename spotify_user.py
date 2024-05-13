@@ -2,7 +2,7 @@ from fastapi import Request
 from datetime import datetime
 from fastapi.responses import RedirectResponse,JSONResponse
 from starlette.middleware.sessions import SessionMiddleware
-from spotify_api import get_auth_url, get_token_info, refresh_token
+from spotify_api import use_refresh_token, get_auth_url, get_token_info
 import json
 from DB.models import SPOTIFY
 from CRUD.spotify import *
@@ -38,10 +38,11 @@ def refresh_access_token(user_info:dict) -> RedirectResponse:
         return RedirectResponse('/login')
     if datetime.now().timestamp() > user_info['EXPIRE_DATE']:
         print(user_info['REFRESH_TOKEN'])
-        new_token_info = refresh_token(user_info['REFRESH_TOKEN'])
+        new_token_info = use_refresh_token(user_info['REFRESH_TOKEN'])
         print(new_token_info)
         access_token= new_token_info['access_token']
+        refresh_token = new_token_info['refresh_token']
         expire_date= datetime.now().timestamp() + new_token_info['expires_in']
         user_id = user_info['USER_ID']
-        update_refreshtoken(user_id, access_token, expire_date)
-        return RedirectResponse(f'/spotify/{user_id}/userinfo')
+        update_refreshtoken(user_id, access_token, refresh_token, expire_date)
+        return RedirectResponse(f'/mainpage/spotify/{user_id}/userinfo')

@@ -15,18 +15,21 @@ class Signup(BaseModel):
      AGE : int
 @router.post('/')
 def signup(signup: Signup):
+    print(signup)
+    SETTOP_NUM = signup.SETTOP_NUM.replace('"', '')
     if signup:
         session_maker.execute(
             insert(USERS),
             [
                 {
-                    "SETTOP_NUM" : signup.SETTOP_NUM,
+                    "SETTOP_NUM" : SETTOP_NUM,
                     "USER_NAME" : signup.USER_NAME,
                     "GENDER" : signup.GENDER,
-                    "AGE" : signup.AGE,
+                    "AGE" : int(signup.AGE),
                 }
             ]
           )
-        return JSONResponse(content='FINISH INSERT USERS', status_code= 200)
+        session_maker.commit()
+        return JSONResponse(content={'response': 'FINISH INSERT USERS'}, status_code= 200)
     else :
-        return JSONResponse(content='EMPTY_SIGNUP_ELEMENTS', status_code = 400)
+        return JSONResponse(content={'error' : 'EMPTY_SIGNUP_ELEMENTS'}, status_code = 400)

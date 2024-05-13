@@ -9,13 +9,13 @@ engine = engineconn()
 session_maker = engine.sessionmaker()
 router = APIRouter(prefix='/login')
 class Settop_id(BaseModel):
-    id : str
+    settop_num : str
 @router.post('/')
 async def login(settop_id : Settop_id):
     if settop_id:
         settop_user_list = session_maker.execute(
             select(USERS.USER_NAME).
-            where(USERS.SETTOP_NUM == settop_id.id))
+            where(USERS.SETTOP_NUM == settop_id.settop_num))
         user_list = []
         for user in list(settop_user_list):
                 print(user[0])

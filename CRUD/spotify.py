@@ -85,13 +85,14 @@ def vodlist_match_useremotion(user_id) -> str:
     print(json_results)
     return json_results
 
-def update_refreshtoken(user_id, access_token, expires_at):
+def update_refreshtoken(user_id, access_token, refresh_token, expires_at):
     session_maker.execute(
         update(SPOTIFY)
         .where(SPOTIFY.USER_ID == user_id)
         .values(
             {
                 SPOTIFY.ACCESS_TOKEN : access_token,
+                SPOTIFY.REFRESH_TOKEN : refresh_token,
                 SPOTIFY.EXPIRE_DATE : expires_at
             }
         )
